@@ -10,6 +10,7 @@ import SwiftData
 
 struct TodoListView: View {
     @ObservedObject var todoViewModel: TodoViewModel
+    
     let todoItems: [Todo]
     
     @State var showCompleted: Bool = true
@@ -17,7 +18,10 @@ struct TodoListView: View {
     var body: some View {
         List {
             Section(header: Text("TODO")) {
-                ForEach(todoItems.filter { !$0.isComplete }) { todoItem in
+                ForEach(todoItems
+                    .filter { !$0.isComplete }
+                    .sorted { $0.creationDate > $1.creationDate }
+                ) { todoItem in
                     todoItemRow(todoItem)
                 }
             }
