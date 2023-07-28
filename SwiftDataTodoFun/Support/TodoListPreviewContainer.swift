@@ -12,7 +12,7 @@ let TodoListPreviewContainer: ModelContainer = {
     do {
         let container = try ModelContainer(for: Todo.self, ModelConfiguration(inMemory: true))
         for sampleTodo in SampleTodos {
-            container.mainContext.insert(object: sampleTodo)
+            container.mainContext.insert(sampleTodo)
         }
         return container
     } catch let error {
