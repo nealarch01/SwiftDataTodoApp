@@ -47,5 +47,3 @@ class TodoViewModel: ObservableObject {
         modelContext.delete(todo)
     }
 }
-
-// MARK: - CUD Functions
