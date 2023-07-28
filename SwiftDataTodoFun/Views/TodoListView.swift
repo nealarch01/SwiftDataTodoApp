@@ -38,24 +38,24 @@ struct TodoListView: View {
         .alert("Edit todo", isPresented: $todoViewModel.showEditAlert) {
             TextField("", text: $todoViewModel.editTodoText)
             Button(action: {
-                todoViewModel.confirmAction.send(false)
+                todoViewModel.confirmEditAction.send(false)
             }) {
                 Text("Cancel")
             }
             Button(action: {
-                todoViewModel.confirmAction.send(true)
+                todoViewModel.confirmEditAction.send(true)
             }) {
                 Text("Done")
             }
         }
         .alert("Are you sure you want to delete this todo?", isPresented: $todoViewModel.showDeleteAlert) {
             Button(role: .cancel, action: {
-                todoViewModel.confirmAction.send(false)
+                todoViewModel.confirmDeleteAction.send(false)
             }) {
                 Text("Cancel")
             }
             Button(role: .destructive, action: {
-                todoViewModel.confirmAction.send(true)
+                todoViewModel.confirmDeleteAction.send(true)
             }) {
                 Text("Delete")
             }
@@ -89,7 +89,7 @@ extension TodoListView {
                 Button(role: .destructive, action: {
                     todoViewModel.deleteTodo.send(todoItem)
                 }) {
-                    Label("Delete", systemImage: "minus-circle")
+                    Label("Delete", systemImage: "minus.circle")
                 }
             }
 

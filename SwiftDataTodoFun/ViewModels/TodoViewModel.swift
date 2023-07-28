@@ -36,7 +36,8 @@ class TodoViewModel: ObservableObject {
     
     let toggleTodoCompletionStatus = PassthroughSubject<Todo, Never>()
     
-    let confirmAction = PassthroughSubject<Bool, Never>()
+    let confirmEditAction = PassthroughSubject<Bool, Never>()
+    let confirmDeleteAction = PassthroughSubject<Bool, Never>()
     
     private var subscriptions = Set<AnyCancellable>()
     
@@ -60,11 +61,13 @@ class TodoViewModel: ObservableObject {
         editTodo.sink { [weak self] todo in
             guard let self = self else { return }
             self.showEditAlert = true
+            print("Show edit alert: \(self.showEditAlert)")
             self.editTodoText = todo.title
         }
         .store(in: &subscriptions)
         
-        Publishers.Zip(editTodo, confirmAction)
+        Publishers.Zip(editTodo, confirmEditAction)
+            .eraseToAnyPublisher()
             .sink { [weak self] todoItem, confirmEdit in
                 guard let self = self else { return }
                 if !confirmEdit { return }
@@ -88,7 +91,7 @@ class TodoViewModel: ObservableObject {
             }
             .store(in: &subscriptions)
         
-        Publishers.Zip(deleteTodo, confirmAction)
+        Publishers.Zip(deleteTodo, confirmDeleteAction)
             .sink { [weak self] todoItem, confirmDelete in
                 guard let self = self else { return }
                 if !confirmDelete { return }
