@@ -65,14 +65,14 @@ extension TodoListView {
             }
             .alert("Edit todo", isPresented: $todoViewModel.showEditAlert) {
                 TextField("", text: $todoViewModel.editTodoText)
+                Button(action: { todoViewModel.showEditAlert = false }) {
+                    Text("Cancel")
+                }
                 Button(action: {
                     todoViewModel.updateTodoTitle(todo: todoItem)
                     todoViewModel.showEditAlert = false
                 }) {
                     Text("Done")
-                }
-                Button(action: { todoViewModel.showEditAlert = false }) {
-                    Text("Cancel")
                 }
             }
     }
