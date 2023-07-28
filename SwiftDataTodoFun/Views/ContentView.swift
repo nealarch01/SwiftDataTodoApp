@@ -43,7 +43,7 @@ struct ContentView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.gray, lineWidth: 2)
                 }
-            Button(action: { todoViewModel.createNewTodo() }) {
+            Button(action: { todoViewModel.createTodo.send() }) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.green)

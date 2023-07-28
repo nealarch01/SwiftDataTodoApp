@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import Combine
 
 @MainActor
 class TodoViewModel: ObservableObject {
@@ -16,34 +17,83 @@ class TodoViewModel: ObservableObject {
     /// When using Xcode previews, prevent create, update, or delete operations on SampleData
     private let inPreviewMode = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     
+    // TextFields bindings
     @Published var newTodoText: String = ""
-    
     @Published var editTodoText: String = ""
+    
     @Published var showEditAlert: Bool = false
+    @Published var showErrorAlert: Bool = false
+    
+    @Published var errorAlertMessage: String = ""
+    
+    @Published var showDeleteAlert: Bool = false
+    
+    let createTodo = PassthroughSubject<Void, Never>()
+    
+    let editTodo = PassthroughSubject<Todo, Never>()
+    
+    let deleteTodo = PassthroughSubject<Todo, Never>()
+    
+    let toggleTodoCompletionStatus = PassthroughSubject<Todo, Never>()
+    
+    let confirmAction = PassthroughSubject<Bool, Never>()
+    
+    private var subscriptions = Set<AnyCancellable>()
     
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
+        sinkSubjects()
     }
     
-    public func createNewTodo() {
-        if inPreviewMode { return }
-        let newTodo = Todo(title: newTodoText, isComplete: false)
-        self.modelContext.insert(newTodo)
-        newTodoText = ""
-    }
-    
-    public func updateTodoTitle(todo: Todo) {
-        if inPreviewMode { return }
-        todo.title = editTodoText
-    }
-    
-    public func updateTodoCompletionStatus(todo: Todo, isComplete: Bool) {
-        if inPreviewMode { return }
-        todo.isComplete = isComplete
-    }
-    
-    public func deleteTodo(todo: Todo) {
-        if inPreviewMode { return }
-        modelContext.delete(todo)
+    private func sinkSubjects() {
+        // Create
+        createTodo
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                let newTodo = Todo(title: self.newTodoText, isComplete: false)
+                self.modelContext.insert(newTodo)
+                self.newTodoText = ""
+            }
+            .store(in: &subscriptions)
+        
+        // Update - title
+        editTodo.sink { [weak self] todo in
+            guard let self = self else { return }
+            self.showEditAlert = true
+            self.editTodoText = todo.title
+        }
+        .store(in: &subscriptions)
+        
+        Publishers.Zip(editTodo, confirmAction)
+            .sink { [weak self] todoItem, confirmEdit in
+                guard let self = self else { return }
+                if !confirmEdit { return }
+                todoItem.title = self.editTodoText
+                self.editTodoText = ""
+                self.showEditAlert = false
+            }
+            .store(in: &subscriptions)
+        
+        // Update - toggle completion
+        self.toggleTodoCompletionStatus
+            .sink { todo in
+                todo.isComplete.toggle()
+            }
+            .store(in: &subscriptions)
+        
+        // Todo Delete
+        deleteTodo
+            .sink { [weak self] _ in
+                self?.showDeleteAlert = true
+            }
+            .store(in: &subscriptions)
+        
+        Publishers.Zip(deleteTodo, confirmAction)
+            .sink { [weak self] todoItem, confirmDelete in
+                guard let self = self else { return }
+                if !confirmDelete { return }
+                self.modelContext.delete(todoItem)
+            }
+            .store(in: &subscriptions)
     }
 }

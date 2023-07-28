@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import Combine
 import SwiftData
 
 struct TodoListView: View {
     @ObservedObject var todoViewModel: TodoViewModel
     
-    let todoItems: [Todo]
+    var todoItems: [Todo]
     
     @State var showCompleted: Bool = true
     
@@ -34,6 +35,36 @@ struct TodoListView: View {
                 }
             }
         }
+        .alert("Edit todo", isPresented: $todoViewModel.showEditAlert) {
+            TextField("", text: $todoViewModel.editTodoText)
+            Button(action: {
+                todoViewModel.confirmAction.send(false)
+            }) {
+                Text("Cancel")
+            }
+            Button(action: {
+                todoViewModel.confirmAction.send(true)
+            }) {
+                Text("Done")
+            }
+        }
+        .alert("Are you sure you want to delete this todo?", isPresented: $todoViewModel.showDeleteAlert) {
+            Button(role: .cancel, action: {
+                todoViewModel.confirmAction.send(false)
+            }) {
+                Text("Cancel")
+            }
+            Button(role: .destructive, action: {
+                todoViewModel.confirmAction.send(true)
+            }) {
+                Text("Delete")
+            }
+        }
+        .alert("No todo entered. Type some text to create a new todo!", isPresented: $todoViewModel.showErrorAlert) {
+            Button(role: .cancel, action: {}) {
+                Text("Dismiss")
+            }
+        }
     }
 }
 
@@ -43,42 +74,25 @@ extension TodoListView {
         Text(todoItem.title)
             .swipeActions {
                 Button(action: {
-                    todoViewModel.updateTodoCompletionStatus(
-                        todo: todoItem,
-                        isComplete: !todoItem.isComplete)
+                    todoViewModel.toggleTodoCompletionStatus.send(todoItem)
                 }) {
                     Text(todoItem.isComplete ? "Todo" : "Done")
                 }
                 .tint(todoItem.isComplete ? Color.blue : Color.green)
             }
             .contextMenu {
-                Group {
-                    Button(action: {
-                        todoViewModel.editTodoText = todoItem.title
-                        todoViewModel.showEditAlert = true
-                    }) {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    Button(role: .destructive, action: {
-                        todoViewModel.deleteTodo(todo: todoItem)
-                    }) {
-                        Label("Delete", systemImage: "minus-circle")
-                    }
-
-                }
-            }
-            .alert("Edit todo", isPresented: $todoViewModel.showEditAlert) {
-                TextField("", text: $todoViewModel.editTodoText)
-                Button(action: { todoViewModel.showEditAlert = false }) {
-                    Text("Cancel")
-                }
                 Button(action: {
-                    todoViewModel.updateTodoTitle(todo: todoItem)
-                    todoViewModel.showEditAlert = false
+                    todoViewModel.editTodo.send(todoItem)
                 }) {
-                    Text("Done")
+                    Label("Edit", systemImage: "pencil")
+                }
+                Button(role: .destructive, action: {
+                    todoViewModel.deleteTodo.send(todoItem)
+                }) {
+                    Label("Delete", systemImage: "minus-circle")
                 }
             }
+
     }
     
     @ViewBuilder
