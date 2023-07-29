@@ -22,9 +22,6 @@ class TodoViewModel: ObservableObject {
     @Published var editTodoText: String = ""
     
     @Published var showEditAlert: Bool = false
-    @Published var showErrorAlert: Bool = false
-    
-    @Published var errorAlertMessage: String = ""
     
     @Published var showDeleteAlert: Bool = false
     
@@ -58,16 +55,16 @@ class TodoViewModel: ObservableObject {
             .store(in: &subscriptions)
         
         // Update - title
-        editTodo.sink { [weak self] todo in
-            guard let self = self else { return }
-            self.showEditAlert = true
-            print("Show edit alert: \(self.showEditAlert)")
-            self.editTodoText = todo.title
-        }
+        editTodo
+            .sink { [weak self] todo in
+                guard let self = self else { return }
+                self.showEditAlert = true
+                print("Show edit alert: \(self.showEditAlert)")
+                self.editTodoText = todo.title
+            }
         .store(in: &subscriptions)
         
         Publishers.Zip(editTodo, confirmEditAction)
-            .eraseToAnyPublisher()
             .sink { [weak self] todoItem, confirmEdit in
                 guard let self = self else { return }
                 if !confirmEdit { return }
@@ -78,8 +75,7 @@ class TodoViewModel: ObservableObject {
             .store(in: &subscriptions)
         
         // Update - toggle completion
-        self.toggleTodoCompletionStatus
-            .sink { todo in
+        toggleTodoCompletionStatus.sink { todo in
                 todo.isComplete.toggle()
             }
             .store(in: &subscriptions)

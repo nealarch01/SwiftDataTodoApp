@@ -60,11 +60,6 @@ struct TodoListView: View {
                 Text("Delete")
             }
         }
-        .alert("No todo entered. Type some text to create a new todo!", isPresented: $todoViewModel.showErrorAlert) {
-            Button(role: .cancel, action: {}) {
-                Text("Dismiss")
-            }
-        }
     }
 }
 
