@@ -11,28 +11,27 @@ import Combine
 
 @MainActor
 class TodoViewModel: ObservableObject {
-    /// The database connection
+    // The database connection
     private let modelContext: ModelContext
     
-    /// When using Xcode previews, prevent create, update, or delete operations on SampleData
+    // When using Xcode previews, prevent create, update, or delete operations on SampleData
     private let inPreviewMode = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     
     // TextFields bindings
     @Published var newTodoText: String = ""
     @Published var editTodoText: String = ""
     
+    // Alert bindings
     @Published var showEditAlert: Bool = false
-    
     @Published var showDeleteAlert: Bool = false
     
+    // CRUD subjects
     let createTodo = PassthroughSubject<Void, Never>()
-    
     let editTodo = PassthroughSubject<Todo, Never>()
-    
     let deleteTodo = PassthroughSubject<Todo, Never>()
-    
     let toggleTodoCompletionStatus = PassthroughSubject<Todo, Never>()
     
+    // Confirm subjects
     let confirmEditAction = PassthroughSubject<Bool, Never>()
     let confirmDeleteAction = PassthroughSubject<Bool, Never>()
     
@@ -44,7 +43,6 @@ class TodoViewModel: ObservableObject {
     }
     
     private func sinkSubjects() {
-        // Create
         createTodo
             .sink { [weak self] _ in
                 guard let self = self else { return }
@@ -54,7 +52,7 @@ class TodoViewModel: ObservableObject {
             }
             .store(in: &subscriptions)
         
-        // Update - title
+        // Edit title
         editTodo
             .sink { [weak self] todo in
                 guard let self = self else { return }
@@ -62,8 +60,9 @@ class TodoViewModel: ObservableObject {
                 print("Show edit alert: \(self.showEditAlert)")
                 self.editTodoText = todo.title
             }
-        .store(in: &subscriptions)
+            .store(in: &subscriptions)
         
+        // Wait for edit completion
         Publishers.Zip(editTodo, confirmEditAction)
             .sink { [weak self] todoItem, confirmEdit in
                 guard let self = self else { return }
@@ -74,19 +73,18 @@ class TodoViewModel: ObservableObject {
             }
             .store(in: &subscriptions)
         
-        // Update - toggle completion
         toggleTodoCompletionStatus.sink { todo in
                 todo.isComplete.toggle()
             }
             .store(in: &subscriptions)
         
-        // Todo Delete
         deleteTodo
             .sink { [weak self] _ in
                 self?.showDeleteAlert = true
             }
             .store(in: &subscriptions)
         
+        // Wait for delete completion
         Publishers.Zip(deleteTodo, confirmDeleteAction)
             .sink { [weak self] todoItem, confirmDelete in
                 guard let self = self else { return }
