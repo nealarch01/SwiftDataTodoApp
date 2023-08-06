@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @ObservedObject var todoViewModel: TodoViewModel
+    @StateObject var todoViewModel: TodoViewModel
     
     @Query var todoItems: [Todo]
     
